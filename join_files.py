@@ -9,7 +9,7 @@ pp = printer.pprint
 if __name__ == '__main__':
     files = os.listdir(MEASUREMENTS_PATH)
     for file in files:
-        new_name = file.replace('txt_', '')
+        new_name = file.replace('t.', 't_')
         old_path = os.path.join(MEASUREMENTS_PATH, file)
         new_path = os.path.join(MEASUREMENTS_PATH, new_name)
         
