@@ -6,6 +6,7 @@ from tabulate import tabulate, tabulate_formats
 import sys
 import numpy as np
 from datetime import datetime
+from csv import QUOTE_MINIMAL
 
 MEASUREMENTS_PATH = 'measurements/test_240202'
 MEASUREMENTS_STATS_PATH = 'files_statistics'
@@ -15,18 +16,6 @@ SAMPLES_PER_LOOP = 16520 # The NI9234 takes 16520 samples than stop to save them
 printer = pprint.PrettyPrinter()
 pp = printer.pprint
 
-def get_file_creation_time(file_path):
-    try:
-        # Get the file creation time in seconds since the epoch
-        creation_time = os.path.getctime(file_path)
-        
-        # Convert the creation time to a datetime object
-        creation_datetime = datetime.fromtimestamp(creation_time)
-        
-        return creation_datetime
-    
-    except FileNotFoundError:
-        return f"File not found: {file_path}"
 
 def get_file_encoding(file_name: str) -> str:
     file_path = f'{MEASUREMENTS_PATH}/{file_name}'
@@ -63,7 +52,7 @@ def get_mean_saving_time(df: pd.DataFrame, LOOPS_PER_FILE: str) -> float:
     
     return saving_time.round(6)
 
-def get_df_list(encoding) -> dict[str, list[pd.DataFrame, int]]:
+def get_df_list(encoding) -> dict[str, list[pd.DataFrame | int]]:
     files = [file for _, _, files in os.walk(MEASUREMENTS_PATH) for file in files]
     files.sort(key=lambda item: int(item.split('_')[1].split('.')[0]))
     
@@ -95,14 +84,23 @@ def main(table_styling):
     avrg_saving_time = saving_time/N_OF_FILES
     print(f'{avrg_saving_time=}')
     
+    updated_dfs = [files_dict['test_1.txt'][0]]
     last_value: float = files_dict['test_1.txt'][0]['time'].iat[-1]
-    discrete_diff = files_dict['test_2.txt'][0]['time'].diff()
-    files_dict['test_2.txt'][0]['time'].iat[0] = (last_value + avrg_saving_time).round(6) #Assuming the time save a file and create a new one is the same as the average time it takes to append to file
-    s = files_dict['test_2.txt'][0]['time']
-    for i in range(1, files_dict['test_2.txt'][1]):
-        s.iat[i] = s.iat[i-1] + discrete_diff.iat[i]
+    for file, content in files_dict.items():
+        if file == 'test_1.txt':
+            continue
+        df = content[0]
+        n_of_samples = content[1]
+        discrete_diff = df['time'].diff()
+        df['time'].iat[0] = (last_value + avrg_saving_time).round(6)
+        s = df['time']
+        for i in range(1, n_of_samples):
+            s.iat[i] = s.iat[i-1] + discrete_diff.iat[i]
+        last_value = df['time'].iat[-1]
+        updated_dfs.append(df)    
         
-    joined = pd.concat([files_dict['test_1.txt'][0], files_dict['test_2.txt'][0]], ignore_index=True)
+    joined: pd.DataFrame = pd.concat(updated_dfs, ignore_index=True)
+    joined.to_csv('measurements/joined_file.tsv', sep='\t', encoding=encoding, quoting=QUOTE_MINIMAL, float_format='%.6f', decimal=',', index=False)
     
     
 
