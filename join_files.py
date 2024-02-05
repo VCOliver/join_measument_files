@@ -65,6 +65,7 @@ def get_mean_saving_time(df: pd.DataFrame, LOOPS_PER_FILE: str) -> float:
 
 def get_df_list(encoding) -> dict[str, pd.DataFrame]:
     files = [file for _, _, files in os.walk(MEASUREMENTS_PATH) for file in files]
+    files.sort(key=lambda item: int(item.split('_')[1].split('.')[0]))
     
     header = ['time', 'x', 'y', 'z']
     files_dict = {}
@@ -91,7 +92,11 @@ def main(table_styling):
         saving_time += get_mean_saving_time(df, loops_per_reading)
             
     avrg_saving_time = saving_time/N_OF_FILES
-    print(avrg_saving_time)
+    print(f'{avrg_saving_time=}')
+    last_value: float = files_dict['test_1.txt']['time'].iloc[-1]
+    files_dict['test_2.txt']['time'].iloc[0] = (last_value + avrg_saving_time).round(6)
+    print(files_dict['test_2.txt']['time'].iloc[0])
+    
 
 if __name__ == '__main__':
         
