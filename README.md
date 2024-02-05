@@ -1,5 +1,12 @@
-Code to join some measurements files together using Pandas.
+# Measurement Files Joiner using Pandas
 
-to run the file just type 'python join_files.py [table-styling]'
+This Python script allows you to join multiple measurement files using Pandas and save the main informations on .txt files.
 
-The Table styling is optimal. And it is according to the table stypes in tabulate. https://pypi.org/project/tabulate/
+## Usage
+
+To run the script, simply execute the following command in your terminal:
+
+```bash
+python join_files.py [table-styling]
+```
+Table styling is not mandatory and it is based on tabulate (https://pypi.org/project/tabulate/)
