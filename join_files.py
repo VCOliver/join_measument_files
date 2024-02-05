@@ -58,19 +58,19 @@ def write_stats(df: pd.DataFrame, file_name: str, encoding='utf-8', table_stylin
 def get_mean_saving_time(df: pd.DataFrame, LOOPS_PER_FILE: str) -> float:
     saving_time = 0    
     for i in range(1, LOOPS_PER_FILE):
-        saving_time+= df.iloc[SAMPLES_PER_LOOP*i, 0] - df.iloc[SAMPLES_PER_LOOP*i-1, 0]
+        saving_time+= df.at[SAMPLES_PER_LOOP*i, 'time'] - df.at[SAMPLES_PER_LOOP*i-1, 'time']
     saving_time = saving_time / (LOOPS_PER_FILE-1)
     
     return saving_time.round(6)
 
-def get_df_list(encoding) -> dict[str, pd.DataFrame]:
+def get_df_list(encoding) -> dict[str, list[pd.DataFrame, int]]:
     files = [file for _, _, files in os.walk(MEASUREMENTS_PATH) for file in files]
     files.sort(key=lambda item: int(item.split('_')[1].split('.')[0]))
     
     header = ['time', 'x', 'y', 'z']
     files_dict = {}
     for file in files:
-        files_dict[file] = pd.read_csv(f'{MEASUREMENTS_PATH}/{file}', sep='\t', decimal=',', encoding=encoding, header=None, names=header)
+        files_dict[file] = [pd.read_csv(f'{MEASUREMENTS_PATH}/{file}', sep='\t', decimal=',', encoding=encoding, header=None, names=header)]
 
     return files_dict
 
@@ -81,21 +81,29 @@ def main(table_styling):
 
     saving_time = 0
     for key, value in files_dict.items():
-        df = value
+        df = value[0]
         stat_file_name = key.replace('.txt', '_stats.txt')
         if table_styling in tabulate_formats:
             n_of_readings = write_stats(df, stat_file_name, encoding=encoding, table_styling=table_styling)
         else:
             n_of_readings = write_stats(df, stat_file_name, encoding=encoding)
+        files_dict[key].append(n_of_readings)
         
         loops_per_reading = int(n_of_readings/SAMPLES_PER_LOOP)
         saving_time += get_mean_saving_time(df, loops_per_reading)
             
     avrg_saving_time = saving_time/N_OF_FILES
     print(f'{avrg_saving_time=}')
-    last_value: float = files_dict['test_1.txt']['time'].iloc[-1]
-    files_dict['test_2.txt']['time'].iloc[0] = (last_value + avrg_saving_time).round(6)
-    print(files_dict['test_2.txt']['time'].iloc[0])
+    
+    last_value: float = files_dict['test_1.txt'][0]['time'].iat[-1]
+    discrete_diff = files_dict['test_2.txt'][0]['time'].diff()
+    files_dict['test_2.txt'][0]['time'].iat[0] = (last_value + avrg_saving_time).round(6) #Assuming the time save a file and create a new one is the same as the average time it takes to append to file
+    s = files_dict['test_2.txt'][0]['time']
+    for i in range(1, files_dict['test_2.txt'][1]):
+        s.iat[i] = s.iat[i-1] + discrete_diff.iat[i]
+        
+    joined = pd.concat([files_dict['test_1.txt'][0], files_dict['test_2.txt'][0]], ignore_index=True)
+    
     
 
 if __name__ == '__main__':
