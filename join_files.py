@@ -63,7 +63,7 @@ def get_df_list(encoding) -> dict[str, list[pd.DataFrame | int]]:
 
     return files_dict
 
-def write_info(df: pd.DataFrame, table_styling: str) -> None:
+def write_info(df: pd.DataFrame, table_styling='rounded_outline') -> None:
     file_path = 'measurements/info.txt'
     file_stats = df.describe()
     
@@ -135,5 +135,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         table_styling = sys.argv[1]
         
-    # main(table_styling)
+    main(table_styling)
     
