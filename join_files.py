@@ -63,18 +63,19 @@ def get_df_list(encoding) -> dict[str, list[pd.DataFrame | int]]:
 
     return files_dict
 
-def write_info(df: pd.DataFrame) -> None:
+def write_info(df: pd.DataFrame, table_styling: str) -> None:
     file_path = 'measurements/info.txt'
     file_stats = df.describe()
     
     count = int(file_stats.iloc[0, 1])
     file_stats.drop('count', inplace=True)
-    table = tabulate(file_stats, headers='keys', tablefmt='github', floatfmt=".7f")
+    table = tabulate(file_stats, headers='keys', tablefmt=table_styling, floatfmt=".7f")
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(table)
         file.write(f'\n\nNumber of measuments = {count}')
         
         file.write("""
+                   
 Resultados do teste feito em 02/02/2024
 
 Os valores de tempo estão em segundos;
@@ -121,7 +122,11 @@ def main(table_styling):
         f.write('time	        x	        y	        z\n')
     joined.to_csv('measurements/joined_file.tsv', sep='\t', encoding=encoding, quoting=QUOTE_MINIMAL, float_format='%.6f', decimal=',', index=False, header=False, mode='a')
     
-    write_info(joined)
+    if table_styling in tabulate_formats:
+        write_info(joined, table_styling)
+    else:
+        write_info(joined)
+    
     
 
 if __name__ == '__main__':
@@ -131,5 +136,4 @@ if __name__ == '__main__':
         table_styling = sys.argv[1]
         
     main(table_styling)
-    
     
