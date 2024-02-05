@@ -63,6 +63,23 @@ def get_df_list(encoding) -> dict[str, list[pd.DataFrame | int]]:
 
     return files_dict
 
+def write_info(df: pd.DataFrame) -> None:
+    file_path = 'measurements/info.txt'
+    file_stats = df.describe()
+    
+    count = int(file_stats.iloc[0, 1])
+    file_stats.drop('count', inplace=True)
+    table = tabulate(file_stats, headers='keys', tablefmt='github', floatfmt=".7f")
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(table)
+        file.write(f'\n\nNumber of measuments = {count}')
+        
+        file.write("""
+Resultados do teste feito em 02/02/2024
+
+Os valores de tempo estão em segundos;
+Os valores das acelerações x, y e z estão g(gravidade)""")
+
 def main(table_styling):
     encoding = get_file_encoding('test_1.txt')
     
@@ -100,8 +117,11 @@ def main(table_styling):
         updated_dfs.append(df)    
         
     joined: pd.DataFrame = pd.concat(updated_dfs, ignore_index=True)
-    joined.to_csv('measurements/joined_file.tsv', sep='\t', encoding=encoding, quoting=QUOTE_MINIMAL, float_format='%.6f', decimal=',', index=False)
+    with open('measurements/joined_file.tsv', 'w') as f:
+        f.write('time	        x	        y	        z\n')
+    joined.to_csv('measurements/joined_file.tsv', sep='\t', encoding=encoding, quoting=QUOTE_MINIMAL, float_format='%.6f', decimal=',', index=False, header=False, mode='a')
     
+    write_info(joined)
     
 
 if __name__ == '__main__':
