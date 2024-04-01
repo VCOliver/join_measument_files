@@ -135,5 +135,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         table_styling = sys.argv[1]
         
-    main(table_styling)
+    # main(table_styling)
+    joined = pd.read_csv('measurements/joined_file.tsv', sep='\t', decimal=',', encoding='utf-8')
+    write_info(joined, table_styling)
+    
+    print(joined.abs().mean())
     
